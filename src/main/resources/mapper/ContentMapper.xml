@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper  namespace="com.dll.dao.ContentMapper">
+	<!--  有些属性不写貌似不会自动封装了 -->
+	<resultMap id="content-category-association" type="com.dll.model.Content">
+		<association property="category" column="category" javaType="com.dll.model.Category">
+			<id property="caid" column="category"/>
+			<result property="name" column="name"/>
+		</association>
+	</resultMap>
+	
+	<resultMap id="content-category" type="com.dll.model.Content">
+		<result column="category" property="category.caid"></result>
+		<result column="name" property="category.name"></result>
+	</resultMap>
+	
+	
+	<!-- 使用集联属性方式 -->
+	<select id="findAll" resultMap="content-category">
+		select * from contents,categories where contents.category=categories.caid 
+	</select>
+	
+	<select id="findAllAndStatus" resultMap="content-category">
+		select * from contents,categories where contents.category=categories.caid and status='publish'
+	</select>
+	
+	<!-- 使用association方式 -->
+	<select id="findById" resultMap="content-category">
+		select * from contents,categories where contents.category=categories.caid and cid=#{cid}
+	</select>
+	
+	<select id="findByCategory" resultMap="content-category">
+		select * from contents,categories where contents.category=categories.caid and caid=#{caid} and status='publish'
+	</select>
+	
+	<insert id="save">
+		insert into contents(title,slug,created,modified,content,status,tags,category,hits,comments_num,allow_comment,allow_ping,allow_feed)
+		values(#{title},#{slug},#{created},#{modified},#{content},#{status},#{tags},#{category.caid},#{hits},#{commentsNum},#{allowComment},#{allowPing},#{allowFeed}); 
+	</insert>
+
+	<select id="archiveByCreateTime" resultType="com.dll.model.Archive">
+		SELECT FROM_UNIXTIME(created, '%Y-%m') AS DATE, COUNT(*) AS COUNT FROM contents WHERE TYPE = 'post' AND STATUS = 'publish' GROUP BY DATE desc
+	</select>
+	
+	<select id="findByTitleLikeOrContentLike" resultMap="content-category">
+		select * from contents where title like #{keywords} or content like #{keywords}
+	</select>	
+</mapper>
